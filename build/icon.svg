@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="220" fill="#143f3a"/>
-  <rect x="188" y="282" width="648" height="460" rx="72" fill="#ffffff"/>
-  <path d="M238 346l274 220 274-220" fill="none" stroke="#1b8a78" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M238 680l202-174M786 680L584 506" fill="none" stroke="#143f3a" stroke-width="44" stroke-linecap="round"/>
-  <circle cx="756" cy="276" r="96" fill="#60d1bd"/>
-  <path d="M714 276h84M756 234v84" stroke="#143f3a" stroke-width="34" stroke-linecap="round"/>
-  <text x="512" y="870" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="800" fill="#ffffff">SendOnce</text>
-</svg>
