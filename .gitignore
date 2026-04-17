@@ -5,4 +5,3 @@ release/
 npm-debug.log*
 .DS_Store
 *.local
-release/
