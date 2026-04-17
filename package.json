@@ -1,0 +1,94 @@
+{
+  "name": "sendonce-mails",
+  "version": "0.1.0",
+  "description": "SendOnce Mails desktop email sender built with Node.js, TypeScript, and Electron.",
+  "main": "dist/main/main.js",
+  "author": "SendOnce Mails",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf dist release",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc && npm run copy:renderer",
+    "copy:renderer": "cpx \"src/renderer/**/*.{html,css,png,jpg,jpeg,svg}\" dist/renderer",
+    "start": "npm run start:mac",
+    "start:dev": "npm run build && electron .",
+    "start:mac": "npm run pack && open \"release/mac/SendOnce Mails.app\"",
+    "start:win": "npm run pack:win && powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process 'release/win-unpacked/SendOnce Mails.exe'\"",
+    "pack": "npm run build && electron-builder --dir",
+    "pack:win": "npm run build && electron-builder --win --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:mac:professional": "npm run dist:mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:win:professional": "npm run dist:win",
+    "dist:linux": "npm run build && electron-builder --linux"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^6.4.17",
+    "cpx": "^1.5.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "com.sendoncemails.desktop",
+    "productName": "SendOnce Mails",
+    "icon": "build/icon",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "executableName": "SendOnce Mails",
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office"
+    },
+    "nsis": {
+      "artifactName": "SendOnce Mails Setup ${version}.${ext}",
+      "shortcutName": "SendOnce Mails",
+      "uninstallDisplayName": "SendOnce Mails",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

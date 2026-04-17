@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SendOnce Mails</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="./assets/logo.svg" alt="SendOnce Mails logo" />
+          <div>
+            <p class="eyebrow">SendOnce Mails</p>
+            <h1>Email Control</h1>
+          </div>
+        </div>
+
+        <nav class="side-menu" aria-label="Main screens">
+          <button class="menu-button" type="button" data-screen-target="server">Server Configuration</button>
+          <button class="menu-button" type="button" data-screen-target="receivers">Receivers List</button>
+          <button class="menu-button is-active" type="button" data-screen-target="send">Send Emails</button>
+        </nav>
+
+        <a
+          class="developer-link"
+          href="mailto:scofieldreagan@outlook.com?subject=SALE%20FOR%20YOUR%20SOFTWARE%20MAILSENDER"
+          aria-label="Contact Reagan Scofield"
+        >
+          Developed By Reagan Scofield
+        </a>
+      </aside>
+
+      <main class="content">
+        <section id="server-screen" class="screen" data-screen="server" hidden>
+          <div class="screen-header">
+            <p class="eyebrow">Server Configuration</p>
+            <h2>Save your SMTP settings.</h2>
+          </div>
+
+          <form id="server-form" class="panel-form">
+            <div class="grid two">
+              <label>
+                Host
+                <input id="smtpHost" name="smtpHost" placeholder="smtp.example.com" required />
+              </label>
+              <label>
+                Port
+                <input id="smtpPort" name="smtpPort" type="number" min="1" max="65535" value="587" required />
+              </label>
+              <label>
+                Username
+                <input id="username" name="username" autocomplete="username" required />
+              </label>
+              <label>
+                Password
+                <input id="password" name="password" type="password" autocomplete="current-password" required />
+              </label>
+            </div>
+
+            <label class="checkbox-row">
+              <input id="secure" name="secure" type="checkbox" />
+              Use SSL/TLS
+            </label>
+
+            <div class="actions">
+              <button type="submit">Save Configuration</button>
+              <p id="server-status" class="status" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+
+        <section id="receivers-screen" class="screen" data-screen="receivers" hidden>
+          <div class="screen-header">
+            <p class="eyebrow">Receivers List</p>
+            <h2>Add One Receiver Per Line.</h2>
+          </div>
+
+          <form id="receivers-form" class="panel-form">
+            <label>
+              Receiver Emails
+              <textarea
+                id="receivers"
+                name="receivers"
+                rows="16"
+                placeholder="johndoe@gmail.com&#10;janedoe@gmail.com"
+                required
+              ></textarea>
+            </label>
+
+            <div class="list-summary">
+              <span id="receiver-count">0 Receivers</span>
+              <span>Each new line is treated as a new email.</span>
+            </div>
+
+            <div class="actions">
+              <button type="submit">Save Receivers</button>
+              <p id="receivers-status" class="status" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+
+        <section id="send-screen" class="screen is-active" data-screen="send">
+          <div class="screen-header">
+            <p class="eyebrow">Send Emails</p>
+            <h2>WRITE ONCE AND SEND TO YOUR RECEIVER LIST.</h2>
+          </div>
+
+          <form id="send-form" class="panel-form">
+            <div class="grid two">
+              <label>
+                From Name
+                <input id="fromName" name="fromName" placeholder="Company Team" required />
+              </label>
+              <label>
+                From Email
+                <input id="fromEmail" name="fromEmail" type="email" placeholder="sender@example.com" required />
+              </label>
+            </div>
+
+            <label>
+              Subject
+              <input id="subject" name="subject" required />
+            </label>
+
+            <div class="editor-field">
+              <span class="field-label">Message</span>
+              <div class="rich-editor" aria-label="Message editor">
+                <div class="editor-toolbar" aria-label="Formatting toolbar">
+                  <button type="button" class="editor-command" data-command="bold"><strong>B</strong></button>
+                  <button type="button" class="editor-command" data-command="italic"><em>I</em></button>
+                  <button type="button" class="editor-command" data-command="underline"><span class="underline">U</span></button>
+                  <button type="button" class="editor-command" data-command="formatBlock" data-value="h2">H2</button>
+                  <button type="button" class="editor-command" data-command="formatBlock" data-value="p">P</button>
+                  <button type="button" class="editor-command" data-command="insertUnorderedList">Bullets</button>
+                  <button type="button" class="editor-command" data-command="insertOrderedList">Numbers</button>
+                  <button type="button" class="editor-command" data-command="createLink">Link</button>
+                  <button type="button" class="editor-command" data-command="removeFormat">Clear</button>
+                </div>
+                <div id="message-editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true"></div>
+              </div>
+            </div>
+
+            <label>
+              Signature
+              <textarea id="signature" name="signature" rows="4"></textarea>
+            </label>
+
+            <div class="attachment-row">
+              <button id="attach-button" class="secondary-button" type="button">Insert Attach</button>
+              <span id="attachment-summary">No attachments selected</span>
+            </div>
+
+            <div class="send-summary">
+              <span id="send-ready-count">0 Receivers Ready</span>
+              <span id="config-ready">Server configuration needed</span>
+            </div>
+
+            <div class="progress-area" id="progress-area" hidden>
+              <div class="progress-header">
+                <span id="progress-label">Sending emails...</span>
+                <span id="progress-count">0 / 0</span>
+              </div>
+              <div class="progress-track">
+                <div id="progress-bar" class="progress-bar"></div>
+              </div>
+            </div>
+
+            <section id="report" class="report" hidden>
+              <canvas id="report-chart" width="220" height="220" aria-label="Send report chart"></canvas>
+              <div class="report-list">
+                <div><span class="legend success"></span><strong id="success-count">0</strong> Succeeded</div>
+                <div><span class="legend failed"></span><strong id="failed-count">0</strong> Failed</div>
+                <div><span class="legend rejected"></span><strong id="rejected-count">0</strong> Rejected</div>
+              </div>
+            </section>
+
+            <div class="actions">
+              <button id="send-button" type="submit">Send Emails</button>
+              <p id="send-status" class="status" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
