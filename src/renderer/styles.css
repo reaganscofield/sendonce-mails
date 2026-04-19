@@ -11,9 +11,11 @@
 }
 
 body {
-  min-width: 920px;
+  height: 100vh;
+  min-width: 900px;
   margin: 0;
   background: #f6f7f9;
+  overflow: hidden;
 }
 
 button,
@@ -24,8 +26,9 @@ textarea {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 280px minmax(640px, 1fr);
-  min-height: 100vh;
+  grid-template-columns: 280px minmax(620px, 1fr);
+  height: 100vh;
+  min-height: 0;
 }
 
 .sidebar {
@@ -125,11 +128,15 @@ h2 {
 }
 
 .content {
-  padding: 38px 48px 48px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 32px 42px 36px;
 }
 
 .screen {
+  height: 100%;
   max-width: 980px;
+  min-height: 0;
 }
 
 .screen[hidden] {
@@ -143,6 +150,84 @@ h2 {
 .panel-form {
   display: grid;
   gap: 22px;
+}
+
+#send-screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-width: 1100px;
+}
+
+#send-screen .screen-header {
+  margin-bottom: 16px;
+}
+
+#send-screen .screen-header .eyebrow {
+  margin-bottom: 6px;
+}
+
+#send-screen h2 {
+  font-size: 24px;
+}
+
+#send-form {
+  grid-template-areas:
+    "identity subject"
+    "editor signature"
+    "editor attach"
+    "editor summary"
+    "editor actions";
+  grid-template-columns: minmax(340px, 1.35fr) minmax(240px, 0.85fr);
+  grid-template-rows: auto auto auto auto minmax(48px, auto);
+  gap: 12px 16px;
+  min-height: 0;
+}
+
+#send-form .send-identity {
+  grid-area: identity;
+}
+
+#send-form .send-subject {
+  grid-area: subject;
+}
+
+#send-form .editor-field {
+  display: grid;
+  grid-area: editor;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+#send-form .rich-editor {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+#send-form .editor-surface {
+  min-height: 0;
+  overflow: auto;
+}
+
+#send-form .send-signature {
+  grid-area: signature;
+}
+
+#send-form .send-signature textarea {
+  min-height: 78px;
+  resize: none;
+}
+
+#send-form .attachment-row {
+  grid-area: attach;
+}
+
+#send-form .send-summary {
+  grid-area: summary;
+}
+
+#send-form .actions {
+  grid-area: actions;
 }
 
 .grid {
@@ -175,7 +260,7 @@ textarea {
   width: 100%;
   border: 1px solid #c8d0d8;
   border-radius: 8px;
-  padding: 12px 13px;
+  padding: 10px 12px;
   color: #20242a;
   background: #ffffff;
   font-size: 15px;
@@ -207,7 +292,7 @@ textarea {
   min-width: 0;
   border: 1px solid #c4cfd6;
   border-radius: 6px;
-  padding: 7px 10px;
+  padding: 6px 9px;
   color: #24313a;
   background: #ffffff;
   font-size: 13px;
@@ -313,7 +398,7 @@ button {
   min-width: 142px;
   border: 0;
   border-radius: 8px;
-  padding: 13px 18px;
+  padding: 12px 18px;
   color: #ffffff;
   background: #1b8a78;
   font-weight: 800;
@@ -436,4 +521,126 @@ button:disabled {
 
 .legend.rejected {
   background: #d99a1b;
+}
+
+.modal-overlay {
+  display: grid;
+  position: fixed;
+  inset: 0;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 31, 38, 0.5);
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(620px, 100%);
+  border-radius: 8px;
+  padding: 26px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+
+.modal-dialog[data-tone="error"] .eyebrow,
+.modal-dialog[data-tone="error"] h2 {
+  color: #b42318;
+}
+
+.modal-dialog[data-tone="success"] .eyebrow,
+.modal-dialog[data-tone="success"] h2 {
+  color: #12705f;
+}
+
+.modal-message {
+  margin: 0;
+  color: #42505a;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.modal-dialog button {
+  justify-self: center;
+  margin-top: 4px;
+}
+
+.modal-dialog button[hidden] {
+  display: none;
+}
+
+.send-error-details {
+  display: grid;
+  gap: 8px;
+  max-height: 150px;
+  overflow: auto;
+  border: 1px solid #f0c6c2;
+  border-radius: 8px;
+  padding: 12px;
+  color: #6f1d16;
+  background: #fff5f4;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.send-error-details[hidden] {
+  display: none;
+}
+
+.send-error-details strong {
+  color: #54160f;
+}
+
+.send-error-details ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+@media (max-width: 1000px) {
+  .content {
+    padding: 24px;
+  }
+
+  #send-form {
+    grid-template-columns: minmax(300px, 1.25fr) minmax(220px, 0.75fr);
+  }
+}
+
+@media (max-height: 700px) {
+  .content {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  #send-screen .screen-header {
+    margin-bottom: 10px;
+  }
+
+  #send-screen .screen-header .eyebrow {
+    margin-bottom: 4px;
+  }
+
+  #send-screen h2 {
+    font-size: 22px;
+  }
+
+  #send-form {
+    gap: 10px 14px;
+  }
+
+  .editor-toolbar {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .editor-command {
+    padding: 5px 8px;
+  }
 }

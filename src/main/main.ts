@@ -36,6 +36,10 @@ type DeliveryResult = {
   error?: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 app.setName(APP_NAME);
 app.setAppUserModelId(APP_ID);
 
@@ -83,6 +87,30 @@ app.whenReady().then(() => {
     });
 
     return result.canceled ? [] : result.filePaths;
+  });
+
+  ipcMain.handle('mail:testConnection', async (_event, payload: ServerConfiguration) => {
+    const transporter = nodemailer.createTransport({
+      host: payload.smtpHost,
+      port: payload.smtpPort,
+      secure: payload.secure,
+      auth: {
+        user: payload.username,
+        pass: payload.password
+      }
+    });
+
+    try {
+      await transporter.verify();
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: getErrorMessage(error, 'Unable to connect to the server.')
+      };
+    } finally {
+      transporter.close();
+    }
   });
 
   ipcMain.handle('mail:sendBulk', async (event, payload: SendMailRequest) => {
@@ -144,7 +172,7 @@ app.whenReady().then(() => {
         const result: DeliveryResult = {
           email: receiver,
           status: 'failed',
-          error: error instanceof Error ? error.message : 'Unable to send email.'
+          error: getErrorMessage(error, 'Unable to send email.')
         };
         results.push(result);
         event.sender.send('mail:progress', { completed: results.length, total: payload.receivers.length, result });

@@ -36,8 +36,19 @@ type SendProgress = {
   result: SendMailResult;
 };
 
+type TestConnectionResult =
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
 const api = {
   selectAttachments: (): Promise<string[]> => ipcRenderer.invoke('dialog:select-attachments'),
+  testConnection: (payload: ServerConfiguration): Promise<TestConnectionResult> =>
+    ipcRenderer.invoke('mail:testConnection', payload),
   sendBulkMail: (payload: SendMailRequest): Promise<SendMailResult[]> => ipcRenderer.invoke('mail:sendBulk', payload),
   onSendProgress: (callback: (progress: SendProgress) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, progress: SendProgress): void => callback(progress);

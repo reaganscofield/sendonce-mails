@@ -1,5 +1,6 @@
 type ScreenName = 'server' | 'receivers' | 'send';
 type StatusTone = 'neutral' | 'success' | 'error';
+type ModalTone = 'neutral' | 'success' | 'error';
 
 type ServerConfiguration = {
   smtpHost: string;
@@ -40,9 +41,17 @@ const report = document.querySelector<HTMLElement>('#report');
 const reportChart = document.querySelector<HTMLCanvasElement>('#report-chart');
 const messageEditor = document.querySelector<HTMLDivElement>('#message-editor');
 const editorCommands = document.querySelectorAll<HTMLButtonElement>('.editor-command');
+const messageModal = document.querySelector<HTMLDivElement>('#message-modal');
+const modalDialog = document.querySelector<HTMLElement>('.modal-dialog');
+const modalEyebrow = document.querySelector<HTMLParagraphElement>('#modal-eyebrow');
+const modalTitle = document.querySelector<HTMLHeadingElement>('#modal-title');
+const modalMessage = document.querySelector<HTMLParagraphElement>('#modal-message');
+const modalClose = document.querySelector<HTMLButtonElement>('#modal-close');
+const sendErrorDetails = document.querySelector<HTMLDivElement>('#send-error-details');
 
 let selectedAttachments: string[] = [];
 let removeProgressListener: (() => void) | undefined;
+let isSending = false;
 
 function getInputValue(id: string): string {
   const input = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`);
@@ -78,6 +87,134 @@ function setStatus(id: string, message: string, tone: StatusTone = 'neutral'): v
 
   statusText.textContent = message;
   statusText.dataset.tone = tone;
+}
+
+function showModal(tone: ModalTone, eyebrow: string, title: string, message: string): void {
+  if (!messageModal || !modalDialog || !modalEyebrow || !modalTitle || !modalMessage) {
+    return;
+  }
+
+  modalDialog.dataset.tone = tone;
+  modalEyebrow.textContent = eyebrow;
+  modalTitle.textContent = title;
+  modalMessage.textContent = message;
+
+  if (progressArea) {
+    progressArea.hidden = true;
+  }
+
+  if (report) {
+    report.hidden = true;
+  }
+
+  if (modalClose) {
+    modalClose.hidden = false;
+  }
+
+  if (sendErrorDetails) {
+    sendErrorDetails.hidden = true;
+    sendErrorDetails.replaceChildren();
+  }
+
+  messageModal.hidden = false;
+  modalClose?.focus();
+}
+
+function hideModal(): void {
+  if (isSending) {
+    return;
+  }
+
+  if (messageModal) {
+    messageModal.hidden = true;
+  }
+}
+
+function showSendModal(total: number): void {
+  if (!messageModal || !modalDialog || !modalEyebrow || !modalTitle || !modalMessage) {
+    return;
+  }
+
+  modalDialog.dataset.tone = 'neutral';
+  modalEyebrow.textContent = 'Send Progress';
+  modalTitle.textContent = 'Sending emails.';
+  modalMessage.textContent = 'Your emails are being sent now.';
+
+  if (report) {
+    report.hidden = true;
+  }
+
+  if (sendErrorDetails) {
+    sendErrorDetails.hidden = true;
+    sendErrorDetails.replaceChildren();
+  }
+
+  if (modalClose) {
+    modalClose.hidden = true;
+  }
+
+  messageModal.hidden = false;
+  updateProgress(0, total);
+}
+
+function showSendFailureDetails(results: DeliveryResult[]): void {
+  if (!sendErrorDetails) {
+    return;
+  }
+
+  const failedResults = results.filter((result) => result.status !== 'succeeded');
+
+  if (failedResults.length === 0 || failedResults.length !== results.length) {
+    sendErrorDetails.hidden = true;
+    sendErrorDetails.replaceChildren();
+    return;
+  }
+
+  const heading = document.createElement('strong');
+  heading.textContent = 'Why the emails could not be sent';
+
+  const list = document.createElement('ul');
+
+  failedResults.forEach((result) => {
+    const item = document.createElement('li');
+    const reason =
+      result.error ??
+      (result.status === 'rejected' ? 'The mail server rejected this recipient.' : 'No error reason was returned.');
+    item.textContent = `${result.email}: ${reason}`;
+    list.append(item);
+  });
+
+  sendErrorDetails.replaceChildren(heading, list);
+  sendErrorDetails.hidden = false;
+}
+
+function finishSendModal(results: DeliveryResult[]): void {
+  if (!modalDialog || !modalEyebrow || !modalTitle || !modalMessage) {
+    return;
+  }
+
+  const counts = getDeliveryCounts(results);
+  const hasErrors = counts.failed > 0 || counts.rejected > 0;
+
+  modalDialog.dataset.tone = hasErrors ? 'error' : 'success';
+  modalEyebrow.textContent = 'Send Report';
+  modalTitle.textContent =
+    hasErrors && counts.succeeded === 0 ? 'All emails failed to send.' : hasErrors ? 'Some emails need attention.' : 'Emails sent successfully.';
+  modalMessage.textContent =
+    hasErrors && counts.succeeded === 0
+      ? `${results.length} email${results.length === 1 ? '' : 's'} failed. Review the reason${results.length === 1 ? '' : 's'} below.`
+      : `${counts.succeeded} succeeded, ${counts.failed} failed, ${counts.rejected} rejected.`;
+
+  if (report) {
+    report.hidden = false;
+  }
+
+  showSendFailureDetails(results);
+
+  if (modalClose) {
+    modalClose.hidden = false;
+    modalClose.focus();
+  }
 }
 
 function showScreen(screenName: ScreenName): void {
@@ -157,6 +294,7 @@ function loadSavedData(): void {
 
 function updateReceiverSummaries(): void {
   const receivers = parseReceivers(getInputValue('receivers'));
+  const savedReceivers = getSavedReceivers();
   const label = `${receivers.length} receiver${receivers.length === 1 ? '' : 's'}`;
 
   if (receiverCount) {
@@ -164,7 +302,10 @@ function updateReceiverSummaries(): void {
   }
 
   if (sendReadyCount) {
-    sendReadyCount.textContent = `${label} ready`;
+    sendReadyCount.textContent =
+      savedReceivers.length === 0
+        ? 'No saved receivers'
+        : `${savedReceivers.length} saved receiver${savedReceivers.length === 1 ? '' : 's'} ready`;
   }
 
   const server = getSavedServerConfiguration();
@@ -172,6 +313,12 @@ function updateReceiverSummaries(): void {
   if (configReady) {
     configReady.textContent = server ? 'Server configuration ready' : 'Server configuration needed';
     configReady.dataset.ready = server ? 'true' : 'false';
+  }
+
+  if (sendButton) {
+    const hasSavedReceivers = savedReceivers.length > 0;
+    sendButton.disabled = !hasSavedReceivers;
+    sendButton.title = hasSavedReceivers ? '' : 'Save at least one receiver before sending.';
   }
 }
 
@@ -293,7 +440,21 @@ messageEditor?.addEventListener('paste', (event) => {
   document.execCommand('insertText', false, text);
 });
 
-serverForm?.addEventListener('submit', (event) => {
+modalClose?.addEventListener('click', hideModal);
+
+messageModal?.addEventListener('click', (event) => {
+  if (event.target === messageModal) {
+    hideModal();
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    hideModal();
+  }
+});
+
+serverForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const configuration: ServerConfiguration = {
@@ -303,10 +464,36 @@ serverForm?.addEventListener('submit', (event) => {
     username: getInputValue('username'),
     password: getInputValue('password')
   };
+  const submitButton = serverForm.querySelector<HTMLButtonElement>('button[type="submit"]');
 
-  localStorage.setItem(STORAGE_KEYS.server, JSON.stringify(configuration));
-  setStatus('server-status', 'Configuration saved.', 'success');
-  updateReceiverSummaries();
+  submitButton?.setAttribute('disabled', 'true');
+  setStatus('server-status', 'Testing connection...');
+
+  try {
+    const result = await window.mailSender.testConnection(configuration);
+
+    if (!result.ok) {
+      setStatus('server-status', 'Connection failed. Configuration was not saved.', 'error');
+      showModal('error', 'Connection Failed', 'Server connection failed.', result.error);
+      return;
+    }
+
+    localStorage.setItem(STORAGE_KEYS.server, JSON.stringify(configuration));
+    setStatus('server-status', 'Configuration saved.', 'success');
+    showModal(
+      'success',
+      'Connection Successful',
+      'Server configured successfully.',
+      'The server has been added and configured successfully.'
+    );
+    updateReceiverSummaries();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to test the server connection.';
+    setStatus('server-status', 'Connection failed. Configuration was not saved.', 'error');
+    showModal('error', 'Connection Failed', 'Server connection failed.', message);
+  } finally {
+    submitButton?.removeAttribute('disabled');
+  }
 });
 
 receiversForm?.addEventListener('submit', (event) => {
@@ -362,11 +549,8 @@ sendForm?.addEventListener('submit', async (event) => {
 
   sendButton.disabled = true;
   setStatus('send-status', 'Sending emails...');
-  updateProgress(0, receivers.length);
-
-  if (report) {
-    report.hidden = true;
-  }
+  isSending = true;
+  showSendModal(receivers.length);
 
   removeProgressListener?.();
   removeProgressListener = window.mailSender.onSendProgress((progress) => {
@@ -389,11 +573,8 @@ sendForm?.addEventListener('submit', async (event) => {
     updateProgress(results.length, receivers.length);
     drawReportChart(results);
 
-    if (report) {
-      report.hidden = false;
-    }
-
     const counts = getDeliveryCounts(results);
+    finishSendModal(results);
     setStatus(
       'send-status',
       `Complete. ${counts.succeeded} Succeeded, ${counts.failed} Failed, ${counts.rejected} Rejected.`,
@@ -402,7 +583,9 @@ sendForm?.addEventListener('submit', async (event) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to send emails.';
     setStatus('send-status', message, 'error');
+    showModal('error', 'Send Failed', 'Unable to send emails.', message);
   } finally {
+    isSending = false;
     removeProgressListener?.();
     removeProgressListener = undefined;
     sendButton.disabled = false;
